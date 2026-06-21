@@ -1,0 +1,40 @@
+{
+  "name": "atria",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "bun@1.2.10",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "bun": ">=1.1",
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "db:generate": "bun --filter @atria/db generate",
+    "db:migrate": "bun --filter @atria/db migrate",
+    "db:push": "bun --filter @atria/db push",
+    "db:seed": "bun --filter @atria/db seed",
+    "db:studio": "bun --filter @atria/db studio"
+  },
+  "trustedDependencies": [
+    "@prisma/client",
+    "@prisma/engines",
+    "prisma",
+    "esbuild",
+    "@swc/core",
+    "sharp",
+    "@parcel/watcher"
+  ],
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.3"
+  }
+}
