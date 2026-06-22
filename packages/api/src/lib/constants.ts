@@ -11,3 +11,11 @@ export const FEATURED_LISTING = {
   currency: "usd",
   durationDays: 30,
 } as const;
+
+/** Upload constraints enforced server-side before issuing a presigned URL. */
+export const UPLOAD_LIMITS = {
+  imageMaxBytes: 8 * 1024 * 1024, // 8 MB
+  documentMaxBytes: 20 * 1024 * 1024, // 20 MB
+  imageMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"],
+  documentMimeTypes: ["application/pdf", "image/jpeg", "image/png", "image/webp"],
+} as const;

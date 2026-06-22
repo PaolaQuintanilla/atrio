@@ -34,6 +34,18 @@ export const auth = betterAuth({
         defaultValue: "BUYER",
         input: false,
       },
+      // Surfaced on the session so the API can reject suspended accounts.
+      banned: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+        input: false,
+      },
+      banExpires: {
+        type: "date",
+        required: false,
+        input: false,
+      },
     },
   },
   session: {

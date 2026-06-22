@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { sellerProcedure, ORPCError, type OwnerUser } from "../orpc";
 import { presignUpload, publicUrl, makeObjectKey, PUBLIC_BUCKET } from "../lib/storage";
+import { UPLOAD_LIMITS } from "../lib/constants";
 
 async function assertListingOwner(
   db: typeof import("@atria/db").prisma,
@@ -19,12 +20,19 @@ export const mediaRouter = {
     .input(
       z.object({
         listingId: z.string(),
-        fileName: z.string(),
-        contentType: z.string().regex(/^image\//),
+        fileName: z.string().min(1).max(255),
+        contentType: z.string(),
+        sizeBytes: z.number().int().positive(),
       }),
     )
     .handler(async ({ input, context }) => {
       await assertListingOwner(context.db, input.listingId, context.user);
+      if (!UPLOAD_LIMITS.imageMimeTypes.includes(input.contentType as never)) {
+        throw new ORPCError("BAD_REQUEST", { message: "Unsupported image type." });
+      }
+      if (input.sizeBytes > UPLOAD_LIMITS.imageMaxBytes) {
+        throw new ORPCError("BAD_REQUEST", { message: "Image exceeds the 8 MB limit." });
+      }
       const key = makeObjectKey("listings", input.fileName, input.listingId);
       const uploadUrl = await presignUpload(PUBLIC_BUCKET, key, input.contentType);
       return { uploadUrl, key, publicUrl: publicUrl(key) };

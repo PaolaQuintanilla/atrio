@@ -42,6 +42,7 @@ export function DocumentUploader({
         listingId,
         fileName: file.name,
         contentType: file.type || "application/octet-stream",
+        sizeBytes: file.size,
       });
       const put = await fetch(uploadUrl, {
         method: "PUT",

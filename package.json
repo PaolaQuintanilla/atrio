@@ -16,6 +16,7 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "db:generate": "bun --filter @atria/db generate",
     "db:migrate": "bun --filter @atria/db migrate",

@@ -1,6 +1,16 @@
 import { z } from "zod";
 import { sellerProcedure, ORPCError, type OwnerUser } from "../orpc";
 import { presignUpload, presignDownload, makeObjectKey, PRIVATE_BUCKET } from "../lib/storage";
+import { UPLOAD_LIMITS } from "../lib/constants";
+
+function assertDocumentFile(contentType: string, sizeBytes: number) {
+  if (!UPLOAD_LIMITS.documentMimeTypes.includes(contentType as never)) {
+    throw new ORPCError("BAD_REQUEST", { message: "Documents must be PDF or image files." });
+  }
+  if (sizeBytes > UPLOAD_LIMITS.documentMaxBytes) {
+    throw new ORPCError("BAD_REQUEST", { message: "Document exceeds the 20 MB limit." });
+  }
+}
 
 const DOC_TYPES = [
   "TITLE_DEED",
@@ -28,12 +38,14 @@ export const documentsRouter = {
     .input(
       z.object({
         listingId: z.string(),
-        fileName: z.string(),
+        fileName: z.string().min(1).max(255),
         contentType: z.string(),
+        sizeBytes: z.number().int().positive(),
       }),
     )
     .handler(async ({ input, context }) => {
       await assertListingOwner(context.db, input.listingId, context.user);
+      assertDocumentFile(input.contentType, input.sizeBytes);
       const key = makeObjectKey("documents", input.fileName, input.listingId);
       const uploadUrl = await presignUpload(PRIVATE_BUCKET, key, input.contentType);
       return { uploadUrl, key };
@@ -53,6 +65,7 @@ export const documentsRouter = {
     )
     .handler(async ({ input, context }) => {
       await assertListingOwner(context.db, input.listingId, context.user);
+      assertDocumentFile(input.mimeType, input.sizeBytes);
       const [doc] = await context.db.$transaction([
         context.db.listingDocument.create({ data: { ...input, verificationStatus: "PENDING" } }),
         context.db.listing.update({
