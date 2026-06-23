@@ -35,6 +35,11 @@ export const authedProcedure = publicProcedure.use(({ context, next }) => {
   if (!context.user) {
     throw new ORPCError("UNAUTHORIZED", { message: "Authentication required." });
   }
+  const u = context.user as { banned?: boolean | null; banExpires?: Date | string | null };
+  const banActive = u.banned && (!u.banExpires || new Date(u.banExpires) > new Date());
+  if (banActive) {
+    throw new ORPCError("FORBIDDEN", { message: "Your account has been suspended." });
+  }
   return next({ context: { user: context.user } });
 });
 

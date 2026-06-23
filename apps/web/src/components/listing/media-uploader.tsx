@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { client } from "@/lib/orpc/client";
-import { Button } from "@/components/ui/button";
 
 type Media = { id: string; url: string; isCover: boolean };
 
@@ -30,6 +29,7 @@ export function MediaUploader({
           listingId,
           fileName: file.name,
           contentType: file.type,
+          sizeBytes: file.size,
         });
         const put = await fetch(uploadUrl, {
           method: "PUT",

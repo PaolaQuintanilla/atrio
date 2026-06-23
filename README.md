@@ -1,5 +1,8 @@
 # Atria — Global Real‑Estate & Vehicle Marketplace
 
+<!-- After pushing to GitHub, replace <owner>/<repo> to activate the badge: -->
+<!-- ![CI](https://github.com/<owner>/<repo>/actions/workflows/ci.yml/badge.svg) -->
+
 > A production‑grade, fully type‑safe marketplace where anyone, anywhere, can list or
 > browse **houses, apartments, land, and vehicles** for **rent or sale** — in their own
 > language, with **verified ownership documents** for trust.
