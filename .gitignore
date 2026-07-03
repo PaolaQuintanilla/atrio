@@ -27,3 +27,6 @@ coverage/
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# personal Obsidian vault (local notes, not project docs)
+obsidian-vault/

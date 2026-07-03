@@ -45,7 +45,16 @@
     "haveAccount": "已有账户？",
     "noAccount": "还没有账户？",
     "continueGoogle": "使用 Google 继续",
-    "error": "无法完成请求"
+    "error": "无法完成请求",
+    "forgotPasswordLink": "忘记密码？",
+    "forgotPasswordTitle": "重置密码",
+    "forgotPasswordCta": "发送重置链接",
+    "forgotPasswordSent": "如果该邮箱存在，我们已发送重置链接。",
+    "resetPasswordTitle": "设置新密码",
+    "newPassword": "新密码",
+    "resetPasswordCta": "重置密码",
+    "resetPasswordSuccess": "密码已更新，现在可以登录了。",
+    "resetPasswordInvalid": "此重置链接无效或已过期。"
   },
   "search": {
     "title": "搜索结果",
@@ -110,5 +119,19 @@
     "totalListings": "房源",
     "pending": "待处理",
     "verified": "已验证"
+  },
+  "profile": {
+    "title": "我的资料",
+    "account": "账户",
+    "personalInfo": "个人信息",
+    "name": "姓名",
+    "phone": "电话",
+    "city": "城市",
+    "country": "国家",
+    "bio": "简介",
+    "avatarUrl": "点击照片以更改",
+    "email": "邮箱",
+    "role": "角色",
+    "saved": "资料已更新"
   }
 }

@@ -62,6 +62,14 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           minLength={8}
           autoComplete={isSignUp ? "new-password" : "current-password"}
         />
+        {!isSignUp && (
+          <Link
+            href="/forgot-password"
+            className="inline-block text-sm text-muted-foreground hover:underline"
+          >
+            {t("forgotPasswordLink")}
+          </Link>
+        )}
       </div>
 
       <Button type="submit" className="w-full" disabled={pending}>

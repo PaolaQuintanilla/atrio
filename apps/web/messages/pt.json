@@ -45,7 +45,16 @@
     "haveAccount": "Já tem uma conta?",
     "noAccount": "Não tem uma conta?",
     "continueGoogle": "Continuar com Google",
-    "error": "Não foi possível concluir a operação"
+    "error": "Não foi possível concluir a operação",
+    "forgotPasswordLink": "Esqueceu sua senha?",
+    "forgotPasswordTitle": "Redefina sua senha",
+    "forgotPasswordCta": "Enviar link",
+    "forgotPasswordSent": "Se esse e-mail existir, enviamos um link de redefinição.",
+    "resetPasswordTitle": "Escolha uma nova senha",
+    "newPassword": "Nova senha",
+    "resetPasswordCta": "Redefinir senha",
+    "resetPasswordSuccess": "Senha atualizada. Você já pode entrar.",
+    "resetPasswordInvalid": "Este link é inválido ou expirou."
   },
   "search": {
     "title": "Resultados",
@@ -110,5 +119,19 @@
     "totalListings": "Anúncios",
     "pending": "Pendentes",
     "verified": "Verificados"
+  },
+  "profile": {
+    "title": "Meu perfil",
+    "account": "Conta",
+    "personalInfo": "Informações pessoais",
+    "name": "Nome",
+    "phone": "Telefone",
+    "city": "Cidade",
+    "country": "País",
+    "bio": "Biografia",
+    "avatarUrl": "Clique na sua foto para alterá-la",
+    "email": "E-mail",
+    "role": "Função",
+    "saved": "Perfil atualizado"
   }
 }

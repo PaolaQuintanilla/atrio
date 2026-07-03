@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { sellerProcedure, ORPCError } from "../orpc";
 import { stripe } from "../lib/stripe";
-import { FEATURED_LISTING } from "../lib/constants";
+import { FEATURED_LISTING, SELLER_SUBSCRIPTION } from "../lib/constants";
 
 export const paymentsRouter = {
   /** Create a Stripe Checkout session to feature a listing. */
@@ -58,5 +58,67 @@ export const paymentsRouter = {
       orderBy: { createdAt: "desc" },
       include: { listing: { select: { id: true, title: true } } },
     });
+  }),
+
+  /** Start (or resume) the seller "Pro" subscription via Stripe Checkout. */
+  subscribe: sellerProcedure.handler(async ({ context }) => {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+    // Ensure a Stripe customer + a Subscription row to anchor the webhook on.
+    let sub = await context.db.subscription.findUnique({ where: { userId: context.user.id } });
+    if (sub?.status === "active") {
+      throw new ORPCError("BAD_REQUEST", { message: "You already have an active subscription." });
+    }
+
+    let customerId = sub?.stripeCustomerId ?? undefined;
+    if (!customerId) {
+      const customer = await stripe().customers.create({
+        email: context.user.email,
+        name: context.user.name,
+        metadata: { userId: context.user.id },
+      });
+      customerId = customer.id;
+      sub = await context.db.subscription.upsert({
+        where: { userId: context.user.id },
+        update: { stripeCustomerId: customerId },
+        create: { userId: context.user.id, stripeCustomerId: customerId, status: "inactive" },
+      });
+    }
+
+    const checkout = await stripe().checkout.sessions.create({
+      mode: "subscription",
+      customer: customerId,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: SELLER_SUBSCRIPTION.currency,
+            unit_amount: SELLER_SUBSCRIPTION.priceCents,
+            recurring: { interval: SELLER_SUBSCRIPTION.interval },
+            product_data: { name: `Atria ${SELLER_SUBSCRIPTION.plan} (seller plan)` },
+          },
+        },
+      ],
+      success_url: `${appUrl}/dashboard/payments?subscription=success`,
+      cancel_url: `${appUrl}/dashboard/payments?subscription=cancel`,
+      metadata: { userId: context.user.id, plan: SELLER_SUBSCRIPTION.plan },
+    });
+
+    return { url: checkout.url };
+  }),
+
+  /** The current user's subscription status. */
+  mySubscription: sellerProcedure.handler(async ({ context }) => {
+    return context.db.subscription.findUnique({ where: { userId: context.user.id } });
+  }),
+
+  /** Cancel the subscription at the end of the current billing period. */
+  cancelSubscription: sellerProcedure.handler(async ({ context }) => {
+    const sub = await context.db.subscription.findUnique({ where: { userId: context.user.id } });
+    if (!sub?.stripeSubscriptionId) {
+      throw new ORPCError("NOT_FOUND", { message: "No active subscription." });
+    }
+    await stripe().subscriptions.update(sub.stripeSubscriptionId, { cancel_at_period_end: true });
+    return { ok: true };
   }),
 };

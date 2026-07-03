@@ -12,6 +12,14 @@ export const FEATURED_LISTING = {
   durationDays: 30,
 } as const;
 
+/** Recurring "Pro" plan for sellers (unlimited/priority listings, etc.). */
+export const SELLER_SUBSCRIPTION = {
+  plan: "PRO",
+  priceCents: 2900, // $29.00 / month
+  currency: "usd",
+  interval: "month",
+} as const;
+
 /** Upload constraints enforced server-side before issuing a presigned URL. */
 export const UPLOAD_LIMITS = {
   imageMaxBytes: 8 * 1024 * 1024, // 8 MB

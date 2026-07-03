@@ -48,10 +48,25 @@ All point at the same Postgres. `.env.example` lists every variable.
 
 ```
 apps/web      Next.js 15 — UI, i18n, and the /rpc (oRPC), /api/auth (Better Auth), Stripe webhook handlers
-packages/db   Prisma schema (18 models), client singleton, migrations, seed
+packages/db   Prisma schema (17 models), client singleton, migrations, seed
 packages/api  oRPC routers + business logic (the "backend")
 packages/auth Better Auth instance (server + client)
 ```
+
+### Data model (`packages/db/prisma/schema.prisma`)
+17 models. Auth tables (`User`, `Session`, `Account`, `Verification`) are Better Auth-managed;
+`User.role` and ban fields live on `User`. Domain:
+- `Profile` (1–1 `User`) — phone, avatar, locale, location.
+- `Category` (self-referential tree via `parentId`) → owns `AttributeDefinition`s.
+- `Listing` (belongs to `User` as seller + `Category`) → has `ListingMedia` (public images),
+  `ListingDocument` (private legal docs), `VerificationReview` (admin audit), `Favorite`,
+  `Conversation`, `Payment`, `Report`. Holds dynamic values in `attributes` (JSONB) plus
+  `status`, `verificationStatus`, `isFeatured`/`featuredUntil`, geo, and `sourceLocale`.
+- `Conversation` (per listing, unique `[listingId, buyerId]`) → `Message`s; links buyer + seller.
+- `Payment` / `Subscription` — Stripe records. `Report` — moderation.
+
+Most enums (ListingType, ListingStatus, VerificationStatus, AttributeType, DocumentType, …) are
+real Prisma enums; only `User.role` is a `String` (see Auth below).
 
 ### oRPC: two clients, one router
 The router (`packages/api/src/router.ts`) is mounted in Next.js at `app/rpc/[[...rest]]/route.ts`.
@@ -89,6 +104,41 @@ are only ever served through short-lived signed URLs (`packages/api/src/lib/stor
 document moves a listing to `PENDING`; an admin approves/rejects in the verification queue, which sets
 the "Verified" badge and writes a `VerificationReview` audit row.
 
+### Payments (Stripe)
+Sellers pay to *feature* a listing. `payments.featureListing` (`packages/api/src/routers/payments.ts`)
+creates a Stripe Checkout session and a `PENDING` `Payment` row. Fulfillment is webhook-driven:
+`app/api/webhooks/stripe/route.ts` → `handleStripeWebhook` (`packages/api/src/lib/stripe.ts`) verifies
+the signature, marks the `Payment` `PAID` on `checkout.session.completed`, and sets the listing's
+`isFeatured`/`featuredUntil`. Featured listings sort first in search. The webhook route reads the raw
+request body (don't add body parsing in front of it).
+
+Sellers also have a recurring **Pro subscription** (`payments.subscribe` / `mySubscription` /
+`cancelSubscription`, Checkout `mode: "subscription"`). The webhook handles
+`customer.subscription.created|updated|deleted`, mirroring Stripe state onto the `Subscription` row
+(keyed by `stripeCustomerId`). UI: `components/payments/subscription-card.tsx` on the dashboard.
+
+## Extending the API
+To add an endpoint: write a procedure in `packages/api/src/routers/<area>.ts` using the right base
+(`publicProcedure` / `authedProcedure` / `sellerProcedure` / `adminProcedure`) with a Zod `.input(...)`,
+then register the router in `packages/api/src/router.ts`. Types flow automatically to **both** the
+server caller and the browser client — no codegen, no manual API types. Call it from a Server Component
+via `api.<router>.<proc>(input)` (`lib/orpc/server.ts`) or from a Client Component via
+`orpc.<router>.<proc>.queryOptions({ input })` / `client.<router>.<proc>(input)` (`lib/orpc/client.ts`).
+
+## UI & styling
+- **Tailwind v4, CSS-first.** The Teal/Coral brand is CSS variables + `@theme` tokens in
+  `apps/web/src/styles/globals.css` (light/dark). Change colors there, not in a JS config.
+- **shadcn-style primitives** live in `apps/web/src/components/ui/` (hand-written, minimal Radix);
+  compose classes with the `cn()` helper (`apps/web/src/lib/utils.ts`).
+- Images use a deliberate plain `<img>` (with an eslint-disable) rather than `next/image`, because
+  listing image hosts are arbitrary/user-supplied. Keep that pattern.
+- Money via `formatPrice()`; localized JSON labels via `localized()` (both in `lib/utils.ts`).
+
+## Service configuration status (stubbed)
+S3/R2 storage, Stripe, and email are **placeholder-configured** in the env files. Until real
+credentials are supplied, image/document uploads, payments, and email verification / password reset
+will not function — treat failures there as missing config, not bugs. See `docs/ROADMAP.md`.
+
 ## Conventions / gotchas
 
 - **Internal package imports are extensionless** (`from "../orpc"`, not `"../orpc.js"`). The packages
@@ -98,3 +148,9 @@ the "Verified" badge and writes a `VerificationReview` audit row.
 - Turbo requires the root `package.json#packageManager` field (`bun@…`) to resolve workspaces.
 - `Listing.attributes` writes must be cast to `Prisma.InputJsonValue`.
 - This is a Windows environment; prefer the Bash tool for git/unix-style scripting.
+
+## Further docs
+
+- `README.md` — project overview, stack rationale, getting started.
+- `docs/DEVELOPMENT.md` — full setup, creating an admin user, storage/Stripe/email wiring, deployment.
+- `docs/ROADMAP.md` — what's done vs. outstanding (incl. the stubbed-service follow-ups).
