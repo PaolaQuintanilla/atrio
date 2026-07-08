@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@atria/db": "workspace:*",
+    "@aws-sdk/client-ses": "^3.726.0",
     "better-auth": "^1.2.7"
   },
   "devDependencies": {

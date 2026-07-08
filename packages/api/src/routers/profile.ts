@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { authedProcedure } from "../orpc";
-import { LOCALES } from "../lib/constants";
+import { authedProcedure, ORPCError } from "../orpc";
+import { LOCALES, UPLOAD_LIMITS } from "../lib/constants";
+import { presignUpload, publicUrl, makeObjectKey, PUBLIC_BUCKET } from "../lib/storage";
 
 export const profileRouter = {
   me: authedProcedure.handler(async ({ context }) => {
@@ -9,6 +10,27 @@ export const profileRouter = {
     });
     return { user: context.user, profile };
   }),
+
+  /** Request a presigned URL to upload a profile avatar to the public bucket. */
+  requestAvatarUpload: authedProcedure
+    .input(
+      z.object({
+        fileName: z.string().min(1).max(255),
+        contentType: z.string(),
+        sizeBytes: z.number().int().positive(),
+      }),
+    )
+    .handler(async ({ input, context }) => {
+      if (!UPLOAD_LIMITS.imageMimeTypes.includes(input.contentType as never)) {
+        throw new ORPCError("BAD_REQUEST", { message: "Unsupported image type." });
+      }
+      if (input.sizeBytes > UPLOAD_LIMITS.imageMaxBytes) {
+        throw new ORPCError("BAD_REQUEST", { message: "Image exceeds the 8 MB limit." });
+      }
+      const key = makeObjectKey("avatars", input.fileName, context.user.id);
+      const uploadUrl = await presignUpload(PUBLIC_BUCKET, key, input.contentType);
+      return { uploadUrl, key, publicUrl: publicUrl(key) };
+    }),
 
   /** Promote the current BUYER account to SELLER so they can post listings. */
   becomeSeller: authedProcedure.handler(async ({ context }) => {

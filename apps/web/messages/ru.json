@@ -45,7 +45,16 @@
     "haveAccount": "Уже есть аккаунт?",
     "noAccount": "Нет аккаунта?",
     "continueGoogle": "Продолжить с Google",
-    "error": "Не удалось выполнить запрос"
+    "error": "Не удалось выполнить запрос",
+    "forgotPasswordLink": "Забыли пароль?",
+    "forgotPasswordTitle": "Сброс пароля",
+    "forgotPasswordCta": "Отправить ссылку",
+    "forgotPasswordSent": "Если такой адрес существует, мы отправили ссылку для сброса пароля.",
+    "resetPasswordTitle": "Придумайте новый пароль",
+    "newPassword": "Новый пароль",
+    "resetPasswordCta": "Сбросить пароль",
+    "resetPasswordSuccess": "Пароль обновлён. Теперь вы можете войти.",
+    "resetPasswordInvalid": "Ссылка недействительна или срок её действия истёк."
   },
   "search": {
     "title": "Результаты",
@@ -110,5 +119,19 @@
     "totalListings": "Объявления",
     "pending": "Ожидают",
     "verified": "Проверено"
+  },
+  "profile": {
+    "title": "Мой профиль",
+    "account": "Аккаунт",
+    "personalInfo": "Личная информация",
+    "name": "Имя",
+    "phone": "Телефон",
+    "city": "Город",
+    "country": "Страна",
+    "bio": "О себе",
+    "avatarUrl": "Нажмите на фото, чтобы изменить",
+    "email": "Эл. почта",
+    "role": "Роль",
+    "saved": "Профиль обновлён"
   }
 }

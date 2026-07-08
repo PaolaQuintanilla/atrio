@@ -45,7 +45,16 @@
     "haveAccount": "Already have an account?",
     "noAccount": "Don't have an account?",
     "continueGoogle": "Continue with Google",
-    "error": "Could not complete the request"
+    "error": "Could not complete the request",
+    "forgotPasswordLink": "Forgot your password?",
+    "forgotPasswordTitle": "Reset your password",
+    "forgotPasswordCta": "Send reset link",
+    "forgotPasswordSent": "If that email exists, we've sent a reset link.",
+    "resetPasswordTitle": "Choose a new password",
+    "newPassword": "New password",
+    "resetPasswordCta": "Reset password",
+    "resetPasswordSuccess": "Password updated. You can now sign in.",
+    "resetPasswordInvalid": "This reset link is invalid or has expired."
   },
   "search": {
     "title": "Results",
@@ -110,5 +119,19 @@
     "totalListings": "Listings",
     "pending": "Pending",
     "verified": "Verified"
+  },
+  "profile": {
+    "title": "My profile",
+    "account": "Account",
+    "personalInfo": "Personal information",
+    "name": "Name",
+    "phone": "Phone",
+    "city": "City",
+    "country": "Country",
+    "bio": "Bio",
+    "avatarUrl": "Click your photo to change it",
+    "email": "Email",
+    "role": "Role",
+    "saved": "Profile updated"
   }
 }

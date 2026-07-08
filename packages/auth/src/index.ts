@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { prisma } from "@atria/db";
+import { sendEmail } from "./lib/email";
 
 export const ROLES = ["BUYER", "SELLER", "ADMIN"] as const;
 export type Role = (typeof ROLES)[number];
@@ -16,6 +17,28 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
+    sendResetPassword: async ({ user, url }) => {
+      await sendEmail({
+        to: user.email,
+        subject: "Restablece tu contraseña de Atria",
+        html: `<p>Hola${user.name ? ` ${user.name}` : ""},</p>
+          <p>Solicitaste restablecer tu contraseña. Este enlace vence en 1 hora:</p>
+          <p><a href="${url}">Restablecer contraseña</a></p>
+          <p>Si no fuiste tú quien lo solicitó, puedes ignorar este correo.</p>`,
+      });
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendEmail({
+        to: user.email,
+        subject: "Verifica tu cuenta de Atria",
+        html: `<p>Hola${user.name ? ` ${user.name}` : ""},</p>
+          <p>Confirma tu correo para activar tu cuenta de Atria:</p>
+          <p><a href="${url}">Verificar mi cuenta</a></p>`,
+      });
+    },
   },
   socialProviders: googleConfigured
     ? {

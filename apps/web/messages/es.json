@@ -45,7 +45,16 @@
     "haveAccount": "¿Ya tienes cuenta?",
     "noAccount": "¿No tienes cuenta?",
     "continueGoogle": "Continuar con Google",
-    "error": "No se pudo completar la operación"
+    "error": "No se pudo completar la operación",
+    "forgotPasswordLink": "¿Olvidaste tu contraseña?",
+    "forgotPasswordTitle": "Restablece tu contraseña",
+    "forgotPasswordCta": "Enviar enlace",
+    "forgotPasswordSent": "Si ese correo existe, te enviamos un enlace para restablecerla.",
+    "resetPasswordTitle": "Elige una nueva contraseña",
+    "newPassword": "Nueva contraseña",
+    "resetPasswordCta": "Restablecer contraseña",
+    "resetPasswordSuccess": "Contraseña actualizada. Ya puedes iniciar sesión.",
+    "resetPasswordInvalid": "Este enlace no es válido o ha caducado."
   },
   "search": {
     "title": "Resultados",
@@ -110,5 +119,19 @@
     "totalListings": "Anuncios",
     "pending": "Pendientes",
     "verified": "Verificados"
+  },
+  "profile": {
+    "title": "Mi perfil",
+    "account": "Cuenta",
+    "personalInfo": "Información personal",
+    "name": "Nombre",
+    "phone": "Teléfono",
+    "city": "Ciudad",
+    "country": "País",
+    "bio": "Biografía",
+    "avatarUrl": "Haz clic en tu foto para cambiarla",
+    "email": "Correo",
+    "role": "Rol",
+    "saved": "Perfil actualizado"
   }
 }

@@ -1,11 +1,11 @@
 import { getTranslations } from "next-intl/server";
-import { Building2, Heart, LayoutDashboard, MessageSquare, Plus, Shield } from "lucide-react";
+import { Building2, LayoutDashboard, MessageSquare, Plus, Shield } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getSession } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { LocaleSwitcher } from "./locale-switcher";
 import { ThemeToggle } from "./theme-toggle";
-import { SignOutButton } from "./user-menu";
+import { UserMenu } from "./user-menu";
 
 export async function Navbar() {
   const t = await getTranslations("nav");
@@ -47,18 +47,11 @@ export async function Navbar() {
 
         <div className="ml-auto flex items-center gap-1.5">
           {user && (
-            <>
-              <Link href="/messages" className="hidden sm:block">
-                <Button variant="ghost" size="icon" aria-label={t("messages")}>
-                  <MessageSquare />
-                </Button>
-              </Link>
-              <Link href="/favorites" className="hidden sm:block">
-                <Button variant="ghost" size="icon" aria-label={t("favorites")}>
-                  <Heart />
-                </Button>
-              </Link>
-            </>
+            <Link href="/messages" className="hidden sm:block">
+              <Button variant="ghost" size="icon" aria-label={t("messages")}>
+                <MessageSquare />
+              </Button>
+            </Link>
           )}
           <LocaleSwitcher />
           <ThemeToggle />
@@ -71,7 +64,7 @@ export async function Navbar() {
                   {t("sell")}
                 </Button>
               </Link>
-              <SignOutButton label={t("signOut")} />
+              <UserMenu name={user.name} email={user.email} image={user.image} role={role} />
             </>
           ) : (
             <>
