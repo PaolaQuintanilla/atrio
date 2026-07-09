@@ -129,7 +129,8 @@
     "city": "Cidade",
     "country": "País",
     "bio": "Biografia",
-    "avatarUrl": "Clique na sua foto para alterá-la",
+    "avatarUrl": "Foto de perfil",
+    "avatarUploadLink": "Enviar uma nova imagem",
     "email": "E-mail",
     "role": "Função",
     "saved": "Perfil atualizado"

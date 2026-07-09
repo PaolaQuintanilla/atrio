@@ -33,6 +33,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
   async function onAvatarFile(file: File | undefined) {
     if (!file) return;
     setUploading(true);
+    console.log("Uploading avatar file:", file);
     try {
       const { uploadUrl, publicUrl } = await client.profile.requestAvatarUpload({
         fileName: file.name,
@@ -83,16 +84,29 @@ export function ProfileForm({ initial }: { initial: Initial }) {
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="group relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring overflow-hidden"
         >
           <Avatar
             name={initial.displayName ?? initial.fallbackName}
             src={avatarUrl || undefined}
-            className="size-16 text-xl"
+            className="size-16 text-xl transition group-hover:opacity-85"
           />
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-[10px] text-white font-medium">Edit</span>
+          </div>
         </button>
-        <div className="flex-1 space-y-1.5">
-          <Label>{uploading ? tc("loading") : t("avatarUrl")}</Label>
+        <div className="flex-1 space-y-1">
+          <p className="text-sm font-medium text-foreground">{t("avatarUrl")}</p>
+          <div>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="text-xs text-primary hover:underline font-medium focus:outline-none"
+            >
+              {uploading ? tc("loading") : t("avatarUploadLink")}
+            </button>
+          </div>
         </div>
         <input
           ref={fileInputRef}

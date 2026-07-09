@@ -33,10 +33,9 @@ Legend: `[ ]` todo · effort **S**(<1h) **M**(half-day) **L**(1–2 days) · imp
 
 ## P1 — Production readiness (wire external services + hardening)
 
-- [ ] **Object storage (Cloudflare R2 / AWS S3 / local MinIO)** — **M**
-  - Create public + private buckets, set `S3_*` env, verify image upload and a private
-    document signed-URL round-trip. Optionally add a `docker`-free local MinIO note.
-  - Already coded: presigned upload/download in `packages/api/src/lib/storage.ts`.
+- [x] **Object storage (AWS S3 + CloudFront)** — done. Two S3 buckets (`sa-east-1`) behind a
+  CloudFront distribution (Origin Access Control, bucket stays fully private), plus avatar
+  upload wired the same way as listing images. See `docs/DEVELOPMENT.md#storage-aws-s3--cloudfront`.
 
 - [ ] **Stripe live wiring** — **M**
   - Real test keys, run `stripe listen --forward-to localhost:3000/api/webhooks/stripe`,
@@ -44,10 +43,12 @@ Legend: `[ ]` todo · effort **S**(<1h) **M**(half-day) **L**(1–2 days) · imp
   - Already coded: `packages/api/src/lib/stripe.ts`, `routers/payments.ts`.
   - Note: Stripe has no Bolivian seller accounts → add local rails later (see P3).
 
-- [ ] **Email provider (verification + password reset)** — **M**
-  - Configure Better Auth email (Resend/SMTP). Enable email verification and a forgot-password
-    flow + UI page.
-  - Files: `packages/auth/src/index.ts`, new `apps/web/src/app/[locale]/forgot-password/`.
+- [x] **Email provider (verification + password reset)** — done, via **AWS SES**. Email
+  verification on sign-up and a forgot-password flow are wired. SES is still in **sandbox
+  mode** (only verified addresses can send/receive) — request production access before
+  launch. See `docs/DEVELOPMENT.md#email-aws-ses`.
+  - Files: `packages/auth/src/lib/email.ts`, `packages/auth/src/index.ts`,
+    `apps/web/src/app/[locale]/forgot-password/`, `apps/web/src/app/[locale]/reset-password/`.
 
 - [ ] **Rate limiting** — **M**
   - Throttle auth and messaging endpoints (Better Auth rate-limit and/or oRPC middleware).

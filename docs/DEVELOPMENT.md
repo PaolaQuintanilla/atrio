@@ -64,16 +64,86 @@ Any PostgreSQL works (local install, Neon, Supabase, Railway). Just point the UR
    or SQL: `UPDATE "user" SET role='ADMIN' WHERE email='you@example.com';`
 3. Visit `/admin` for the verification queue and user management.
 
-## Storage (images & documents)
+## Storage (AWS S3 + CloudFront)
 
-The app uploads via S3 presigned URLs:
+The app uploads via S3 presigned URLs (`packages/api/src/lib/storage.ts`):
 
-- **Public bucket** (`S3_BUCKET_PUBLIC`) — listing images.
+- **Public bucket** (`S3_BUCKET_PUBLIC`) — listing images and profile avatars
+  (`avatars/<userId>/<file>`), served through CloudFront.
 - **Private bucket** (`S3_BUCKET_PRIVATE`) — legal documents (Derechos Reales,
   títulos). Access is only ever through short-lived signed URLs granted to the
-  owner and admins.
+  owner and admins — never public.
 
-Works with any S3-compatible provider (Cloudflare R2, AWS S3, MinIO).
+Works with any S3-compatible provider (Cloudflare R2, AWS S3, MinIO); the deployed
+instance uses **real AWS S3** in `sa-east-1` (São Paulo). What was provisioned:
+
+| Resource | Name / ID | Purpose |
+| --- | --- | --- |
+| S3 bucket | `atria-public-<accountId>` | Listing images, avatars — Block Public Access **fully on** |
+| S3 bucket | `atria-private-<accountId>` | Legal documents — Block Public Access **fully on** |
+| CloudFront distribution | fronts the public bucket only | CDN + the only path that can read the public bucket |
+| Origin Access Control (OAC) | `atria-public-oac` | Lets CloudFront read the public bucket via a scoped bucket policy (`AWS:SourceArn` = this distribution) — the bucket itself stays private |
+| IAM user | `atria-app` | Holds the app's runtime credentials (`S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`), scoped to `s3:PutObject`/`GetObject`/`DeleteObject`/`ListBucket` on just these two buckets, plus `ses:SendEmail`/`SendRawEmail` |
+
+Both buckets have CORS enabled for `PUT`/`GET` from the app's origin (update
+`AllowedOrigins` when a production domain exists — currently `localhost:3000` only).
+
+`S3_PUBLIC_URL` in `.env` is the CloudFront domain (e.g.
+`https://<distribution-id>.cloudfront.net`) — `storage.ts`'s `publicUrl()` uses it as an
+override, so every upload automatically resolves through the CDN, never the raw S3 URL.
+
+### Checking it in the AWS Console
+
+- **S3 buckets**: Console → **S3** → find `atria-public-<accountId>` /
+  `atria-private-<accountId>`. "Permissions" tab → confirm all four "Block public access"
+  toggles are **On**. On the public bucket, "Permissions" → "Bucket policy" should show a
+  single statement granting `s3:GetObject` to principal `cloudfront.amazonaws.com`,
+  conditioned on `AWS:SourceArn` matching the CloudFront distribution's ARN — that's the
+  only way objects are ever read.
+- **CloudFront**: Console → **CloudFront** → **Distributions** → the one distribution
+  listed. "Status" should read **Enabled / Deployed** (it starts as "In Progress" for the
+  first 5–15 minutes after creation). The "Origins" tab shows the public bucket as the
+  origin with "Origin access control" set to `atria-public-oac`. Open the distribution's
+  domain name + an object key in a browser (e.g.
+  `https://<distribution>.cloudfront.net/avatars/<userId>/<file>`) to confirm an image
+  loads — the response header `x-cache` will read `Miss from cloudfront` on first load,
+  `Hit from cloudfront` on repeat loads.
+- **IAM**: Console → **IAM** → **Users** → `atria-app`. "Permissions" tab shows the inline
+  policy scoped to the two bucket ARNs plus SES send actions. "Security credentials" tab
+  lists the access key currently in `.env` (`S3_ACCESS_KEY_ID` = the key ID shown here).
+- Do **not** use root account access keys for the app's runtime credentials — if you
+  bootstrapped this setup while signed in as root, delete that root access key afterward
+  (Console → account name, top right → **Security credentials** → "Root user access keys").
+
+## Email (AWS SES)
+
+Better Auth's `emailVerification.sendVerificationEmail` and
+`emailAndPassword.sendResetPassword` hooks (`packages/auth/src/index.ts`) call a small SES
+wrapper (`packages/auth/src/lib/email.ts`) to send the actual emails — no other provider
+(Resend/SMTP) is wired up.
+
+Required env vars: `SES_REGION`, `SES_FROM_EMAIL`, `SES_ACCESS_KEY_ID`,
+`SES_SECRET_ACCESS_KEY` (the same IAM user/key as the S3 vars works fine, since `atria-app`
+already has `ses:SendEmail` permission).
+
+**SES starts in sandbox mode** for every new AWS account: you can only send *from* a
+verified identity, and can only send *to* a verified identity too (recipients aren't
+automatically allowed). This is enough to test with your own inbox, but real users won't
+receive emails until you request production access.
+
+### Checking it in the AWS Console
+
+- **Verified identities**: Console → **SES** → **Verified identities**. `SES_FROM_EMAIL`
+  should show status **Verified** (AWS emails a confirmation link on
+  `aws ses verify-email-identity` / when you create the identity in the console — click it,
+  the console won't flip to "Verified" until you do).
+- **Sandbox status**: Console → **SES** → **Account dashboard**. "Sending statistics" area
+  shows "Your account is in the sandbox" with a **Request production access** button —
+  use it before launch.
+- **Sending failures**: Console → **SES** → **Reputation** → **Suppression list**, or check
+  the app's server logs for `MessageRejected: Email address is not verified` — that error
+  means either the `SES_FROM_EMAIL` or the recipient isn't verified yet (expected in
+  sandbox mode until both sides click their confirmation links).
 
 ## Payments (Stripe)
 
@@ -87,7 +157,11 @@ Works with any S3-compatible provider (Cloudflare R2, AWS S3, MinIO).
 - **Web**: Vercel (project root `apps/web`, or the monorepo preset). Add env vars.
 - **Database**: any managed Postgres (Neon / Supabase / Railway). Set `DATABASE_URL`
   (pooled) and `DIRECT_URL` (direct) for migrations.
-- **Storage**: Cloudflare R2 or AWS S3 with two buckets (public + private).
+- **Storage**: AWS S3 (two buckets, public behind CloudFront) or Cloudflare R2 — see
+  [Storage (AWS S3 + CloudFront)](#storage-aws-s3--cloudfront) above.
+- **Email**: AWS SES — request production access before real users sign up (still
+  sandboxed otherwise). See [Email (AWS SES)](#email-aws-ses) above.
+- When adding a production domain, update the CORS `AllowedOrigins` on both S3 buckets.
 - Run `prisma migrate deploy` on release.
 
 ## Architecture

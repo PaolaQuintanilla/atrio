@@ -53,10 +53,25 @@ export const profileRouter = {
       }),
     )
     .handler(async ({ input, context }) => {
-      return context.db.profile.upsert({
+      const { displayName, avatarUrl } = input;
+
+      const profile = await context.db.profile.upsert({
         where: { userId: context.user.id },
         update: input,
         create: { userId: context.user.id, ...input },
       });
+
+      // Synchronize User model's name and image for better auth session sync
+      if (displayName !== undefined || avatarUrl !== undefined) {
+        await context.db.user.update({
+          where: { id: context.user.id },
+          data: {
+            ...(displayName !== undefined ? { name: displayName } : {}),
+            ...(avatarUrl !== undefined ? { image: avatarUrl } : {}),
+          },
+        });
+      }
+
+      return profile;
     }),
 };
