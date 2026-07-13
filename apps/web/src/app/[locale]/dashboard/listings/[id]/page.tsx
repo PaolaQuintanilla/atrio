@@ -102,6 +102,9 @@ export default async function EditListingPage({
               country: listing.country,
               address: listing.address,
               attributes: listing.attributes as Record<string, unknown>,
+              lat: listing.lat,
+              lng: listing.lng,
+              boundary: listing.boundary,
             }}
           />
         </CardContent>

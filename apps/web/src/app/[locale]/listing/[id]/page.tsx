@@ -10,6 +10,7 @@ import { AttributeList } from "@/components/listing/attribute-list";
 import { ContactSeller } from "@/components/listing/contact-seller";
 import { FavoriteButton } from "@/components/favorite-button";
 import { formatPrice, localized } from "@/lib/utils";
+import { LotMapViewer } from "@/components/listing/lot-map-viewer";
 
 export default async function ListingPage({
   params,
@@ -75,6 +76,14 @@ export default async function ListingPage({
             />
           </CardContent>
         </Card>
+
+        {listing.category.slug === "land" && listing.boundary && (
+          <LotMapViewer
+            boundary={listing.boundary}
+            lat={listing.lat}
+            lng={listing.lng}
+          />
+        )}
 
         <Card>
           <CardContent className="prose max-w-none whitespace-pre-wrap pt-5 text-sm">

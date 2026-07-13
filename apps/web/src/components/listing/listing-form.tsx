@@ -11,6 +11,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { localized } from "@/lib/utils";
+import dynamic from "next/dynamic";
+
+const LotMappingTool = dynamic(
+  () => import("./lot-mapping-tool").then((mod) => mod.LotMappingTool),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[420px] w-full animate-pulse rounded-xl bg-muted flex items-center justify-center border border-[var(--color-border)]">
+        <span className="text-sm text-muted-foreground">Loading interactive map...</span>
+      </div>
+    ),
+  }
+);
 
 type AttrOption = { value: string; label: Record<string, string> };
 type AttrDef = {
@@ -50,6 +63,9 @@ export function ListingForm({
     country?: string | null;
     address?: string | null;
     attributes: Record<string, unknown>;
+    lat?: number | null;
+    lng?: number | null;
+    boundary?: unknown;
   };
 }) {
   const t = useTranslations("listing");
@@ -66,7 +82,20 @@ export function ListingForm({
   const [type, setType] = useState(initial?.type ?? "SALE");
   const [currency, setCurrency] = useState(initial?.currency ?? "USD");
   const [attrs, setAttrs] = useState<Record<string, unknown>>(initial?.attributes ?? {});
+  const [lat, setLat] = useState<number | undefined>(initial?.lat ?? undefined);
+  const [lng, setLng] = useState<number | undefined>(initial?.lng ?? undefined);
+  const [boundary, setBoundary] = useState<unknown>(initial?.boundary ?? null);
   const [pending, setPending] = useState(false);
+
+  const handleMapUpdate = (data: { boundary: unknown; lat: number | null; lng: number | null; area?: number }) => {
+    setBoundary(data.boundary);
+    setLat(data.lat ?? undefined);
+    setLng(data.lng ?? undefined);
+
+    if (data.area && data.area > 0) {
+      setAttrs((prev) => ({ ...prev, area: Math.round(data.area || 0) }));
+    }
+  };
 
   const category = categories.find((c) => c.id === categoryId);
 
@@ -84,6 +113,9 @@ export function ListingForm({
       city: String(form.get("city") || "") || undefined,
       country: String(form.get("country") || "") || undefined,
       address: String(form.get("address") || "") || undefined,
+      lat,
+      lng,
+      boundary,
       attributes: attrs,
       sourceLocale: locale as "es" | "en" | "pt" | "zh" | "ru",
     };
@@ -181,6 +213,18 @@ export function ListingForm({
           <Input id="address" name="address" defaultValue={initial?.address ?? ""} />
         </div>
       </div>
+
+      {category?.slug === "land" && (
+        <div className="space-y-3 rounded-xl border border-[var(--color-border)] p-4 bg-card">
+          <h3 className="font-semibold text-sm">Límites del Terreno (Mapa Interactivo)</h3>
+          <LotMappingTool
+            initialBoundary={boundary as { lat: number; lng: number }[] | null | undefined}
+            initialLat={lat}
+            initialLng={lng}
+            onUpdate={handleMapUpdate}
+          />
+        </div>
+      )}
 
       {/* Dynamic, category-driven attributes */}
       {category && category.attributes.length > 0 && (

@@ -249,6 +249,7 @@ model Listing {
   address            String?
   lat                Float?
   lng                Float?
+  boundary           Json?
   sourceLocale       String             @default("es")
   isFeatured         Boolean            @default(false)
   featuredUntil      DateTime?

@@ -17,6 +17,7 @@ const listingInput = z.object({
   address: z.string().max(240).optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
+  boundary: z.unknown().optional(),
   sourceLocale: z.enum(LOCALES).default("es"),
 });
 
@@ -64,7 +65,7 @@ export const listingsRouter = {
   }),
 
   create: sellerProcedure.input(listingInput).handler(async ({ input, context }) => {
-    const { attributes: rawAttributes, ...rest } = input;
+    const { attributes: rawAttributes, boundary, ...rest } = input;
     const category = await context.db.category.findUnique({
       where: { id: input.categoryId },
       include: { attributes: true },
@@ -79,6 +80,7 @@ export const listingsRouter = {
     return context.db.listing.create({
       data: {
         ...rest,
+        boundary: boundary as Prisma.InputJsonValue,
         attributes,
         sellerId: context.user.id,
         status: "DRAFT",
@@ -89,7 +91,7 @@ export const listingsRouter = {
   update: sellerProcedure
     .input(listingInput.partial().extend({ id: z.string() }))
     .handler(async ({ input, context }) => {
-      const { id, attributes: rawAttributes, ...rest } = input;
+      const { id, attributes: rawAttributes, boundary, ...rest } = input;
       const existing = await assertOwnerOrAdmin(context.db, id, context.user);
 
       let attributes: Prisma.InputJsonValue | undefined;
@@ -106,7 +108,11 @@ export const listingsRouter = {
 
       return context.db.listing.update({
         where: { id },
-        data: { ...rest, ...(attributes !== undefined ? { attributes } : {}) },
+        data: {
+          ...rest,
+          ...(boundary !== undefined ? { boundary: boundary as Prisma.InputJsonValue } : {}),
+          ...(attributes !== undefined ? { attributes } : {}),
+        },
       });
     }),
 
