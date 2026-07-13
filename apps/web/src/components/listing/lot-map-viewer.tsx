@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { MapPin } from "lucide-react";
 import type L from "leaflet";
+import * as turf from "@turf/turf";
 import "leaflet/dist/leaflet.css";
 
 interface Point {
@@ -65,11 +66,41 @@ export function LotMapViewer({ boundary, lat, lng }: LotMapViewerProps) {
 
       const latLngs = points.map((p) => [p.lat, p.lng] as [number, number]);
       const polygon = L.polygon(latLngs, {
-        color: "var(--color-brand-primary, #0d9488)", // Teal-600 outline
-        fillColor: "var(--color-brand-primary, #0d9488)",
-        fillOpacity: 0.25,
+        color: "var(--color-brand-secondary, #f43f5e)", // Rose-500 outline
+        fillColor: "var(--color-brand-secondary, #f43f5e)",
+        fillOpacity: 0.2,
         weight: 3,
       }).addTo(map);
+
+      // Calculate Turf metrics to mark the area with a visual badge inside the polygon
+      const turfCoords = points.map((p) => [p.lng, p.lat] as [number, number]);
+      const firstPt = points[0];
+      if (firstPt) {
+        turfCoords.push([firstPt.lng, firstPt.lat]);
+        try {
+          const poly = turf.polygon([turfCoords]);
+          const areaSqM = turf.area(poly);
+          const centroid = turf.centroid(poly);
+          const centerLng = centroid.geometry.coordinates[0];
+          const centerLat = centroid.geometry.coordinates[1];
+
+          if (typeof centerLng === "number" && typeof centerLat === "number") {
+            const areaLabelText = areaSqM >= 10000 
+              ? `${(areaSqM / 10000).toFixed(2)} ha` 
+              : `${Math.round(areaSqM).toLocaleString()} m²`;
+
+            const areaLabelIcon = L.divIcon({
+              className: "custom-area-badge",
+              html: `<div class="bg-rose-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-full border border-white shadow-md whitespace-nowrap flex items-center justify-center">${areaLabelText}</div>`,
+              iconAnchor: [40, 12],
+              iconSize: [80, 24],
+            });
+            L.marker([centerLat, centerLng], { icon: areaLabelIcon, interactive: false }).addTo(map);
+          }
+        } catch (e) {
+          console.error("Turf computation failed in viewer:", e);
+        }
+      }
 
       // Fit map bounds to the polygon automatically
       try {
